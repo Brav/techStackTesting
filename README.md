@@ -4,7 +4,7 @@
 
 ### Install PHP dependencies
 - composer install
-- 
+
 ### Create env from the example env
 - cp .env.example .env
 - php artisan key:generate
