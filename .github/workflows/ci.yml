@@ -1,0 +1,104 @@
+name: CI (tests • larastan • pint)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**.php'
+      - 'composer.*'
+      - 'phpunit.xml*'
+      - 'phpstan.neon*'
+      - '.github/workflows/**'
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  APP_ENV: testing
+  APP_DEBUG: false
+  APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  CACHE_DRIVER: array
+  SESSION_DRIVER: array
+  QUEUE_CONNECTION: sync
+  DB_CONNECTION: sqlite
+  DB_DATABASE: ":memory:"
+  DB_FOREIGN_KEYS: "true"
+  BROADCAST_DRIVER: log
+  MAIL_MAILER: array
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php }} • Pest/Artisan tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          extensions: mbstring, intl, pdo_sqlite
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --no-interaction --ansi
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --no-interaction
+
+      - name: Copy .env (if needed) & app key
+        run: |
+          [ -f .env ] || cp .env.example .env || true
+          php artisan key:generate --force
+          php artisan config:clear
+
+      - name: Run tests (Pest/Laravel)
+        run: php artisan test --ansi
+
+  larastan:
+    name: PHP ${{ matrix.php }} • Larastan
+    runs-on: ubuntu-latest
+    needs: tests
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          extensions: mbstring, intl, pdo_sqlite
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --no-interaction
+      - name: PHPStan / Larastan
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+  pint:
+    name: PHP ${{ matrix.php }} • Pint (non-blocking)
+    runs-on: ubuntu-latest
+    needs: tests
+    continue-on-error: true   # <-- optional / non-blocking
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+      - name: Install dependencies (no dev dump scripts)
+        run: composer install --no-progress --prefer-dist --no-interaction
+      - name: Pint check
+        run: vendor/bin/pint --test --ansi
