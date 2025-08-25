@@ -27,15 +27,25 @@
             </div>
 
             <div>
-                <h1 class="text-2xl font-semibold">Markets</h1>
+                <h1 class="text-2xl font-semibol"><strong>Markets</strong></h1>
 
                 <ul class="list-none">
-                    <li v-for="market in event.markets">
+                    <li v-for="market in event.markets" :key="market.id" class="mb-2">
                         {{market.title}}
+
+                        <template v-if="market.selections.length > 0">
+                            <ul class="list-none pl-5 mt-2 mb-2">
+                                <h1 class="text-xl font-semibold">Selections</h1>
+                                <li v-for="selection in market.selections" :key="selection.id" class="mb-1">
+                                    {{selection.title}} - <strong>Odds:</strong> {{ selection.odds }}
+                                </li>
+                            </ul>
+                        </template>
                     </li>
                 </ul>
 
             </div>
+
         </div>
     </article>
 </template>

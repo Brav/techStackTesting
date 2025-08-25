@@ -165,7 +165,7 @@ class Event extends Model
         ], JSON_THROW_ON_ERROR));
 
         /** @var LengthAwarePaginator<int, static> */
-        return Cache::remember($cacheKey, now()->addSeconds(30), static function () use ($request, $searchTerm, $perPage) {
+        return Cache::remember($cacheKey, now()->addSeconds(1), static function () use ($request, $searchTerm, $perPage) {
             return static::query()
                 ->with(['teams', 'league', 'markets', 'markets.selections'])
                 ->when($searchTerm !== '', function (Builder $q) use ($searchTerm) {
@@ -178,7 +178,7 @@ class Event extends Model
                     $q->where('status_id', $status_id);
                 })
                 ->orderByDesc('scheduled_at')
-                ->paginate($perPage)      // honors current request page
+                ->paginate($perPage)
                 ->withQueryString();
         });
     }
