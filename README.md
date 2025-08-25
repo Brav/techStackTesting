@@ -21,6 +21,9 @@
 ### Run frontend watcher
 - ./vendor/bin/sail npm run dev
 
+### Access URL
+- Use following url for accessing app: http://localhost:8080/#/
+
 ### Run tests
 - ./vendor/bin/sail artisan test
 
