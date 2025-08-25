@@ -1,1 +1,3 @@
-# techStackTesting
+# Gambling Assigment Test
+
+##Instal
